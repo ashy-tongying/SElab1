@@ -1,0 +1,48 @@
+@startuml UML时序图-取消与递补
+title 交互性图：时序图（取消报名并自动递补）
+
+skinparam shadowing false
+skinparam dpi 150
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+skinparam backgroundColor #FFFEFB
+skinparam ArrowColor #243044
+skinparam SequenceParticipantBorderColor #243044
+skinparam SequenceParticipantBackgroundColor #E7F0EE
+skinparam SequenceActorBorderColor #243044
+skinparam NoteBackgroundColor #FFF6E8
+skinparam NoteBorderColor #C4622D
+
+actor 参与者
+participant "报名服务" as S
+database "数据库" as DB
+participant "通知服务" as N
+participant "审计服务" as A
+
+参与者 -> S : 取消报名(报名编号)
+S -> DB : 开启事务，锁定场次行和该报名记录
+alt 已过报名截止，或状态是终态
+  S -> DB : 回滚
+  S --> 参与者 : 拒绝。截止后只能查看\n已签到、已失效、已缺席都不能取消
+else 当前是候补中或待审核
+  S -> DB : 状态改为已取消
+  S -> DB : 若原为候补中，候补数 -1
+  S -> A : 追加日志(取消报名)
+  S -> DB : 提交事务
+  S --> 参与者 : 返回已取消
+else 当前是已通过
+  S -> DB : 状态改为已取消，已报名数 -1
+  S -> DB : 读取本场次最早的一条候补
+  alt 没有候补
+    S -> A : 追加日志(取消报名)
+    S -> DB : 提交事务
+  else 有候补
+    S -> DB : 候补改为已通过，候补数 -1，已报名数 +1\n收费票此时才写入待支付
+    S -> N : 写站内通知(递补成功)
+    S -> A : 追加日志(取消报名)
+    S -> A : 追加日志(自动递补)
+    S -> DB : 提交事务
+  end
+  S --> 参与者 : 返回已取消
+end
+@enduml

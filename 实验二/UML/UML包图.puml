@@ -1,0 +1,60 @@
+@startuml UML包图
+title 结构性图：包图（模块依赖）
+
+skinparam shadowing false
+skinparam dpi 160
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 14
+skinparam backgroundColor #FFFEFB
+skinparam ArrowColor #243044
+skinparam PackageBorderColor #243044
+skinparam PackageBackgroundColor #F7F4EE
+skinparam nodesep 14
+skinparam ranksep 16
+
+together {
+  package "用户与权限" as User
+  package "活动管理" as Event
+  package "报名与候补" as Reg
+}
+
+together {
+  package "签到核销" as Check
+  package "站内通知" as Notice
+  package "统计与导出" as Stat
+  package "审计日志" as Audit
+}
+
+User -[hidden]right- Event
+Event -[hidden]right- Reg
+Check -[hidden]right- Notice
+Notice -[hidden]right- Stat
+Stat -[hidden]right- Audit
+User -[hidden]down- Check
+
+Event --> User
+Reg --> Event
+Reg --> Notice
+Reg --> Audit
+Check --> Reg
+Check --> Audit
+Event --> Notice
+Event --> Audit
+Stat --> Reg
+Stat --> Audit
+
+legend bottom
+|= 调用方 |= 被调用方 |= 原因 |
+| 活动管理 | 用户与权限 | 校验组织者，并维护本活动检票授权 |
+| 报名与候补 | 活动管理 | 读取容量、截止时间和是否需要审核 |
+| 报名与候补 | 站内通知 | 写入审核结果和递补通知 |
+| 报名与候补 | 审计日志 | 报名、取消、递补都要留痕 |
+| 签到核销 | 报名与候补 | 只把“已通过”改成“已签到” |
+| 签到核销 | 审计日志 | 成功签到和重复签到都记日志 |
+| 活动管理 | 站内通知 | 关键信息变更和活动取消 |
+| 活动管理 | 审计日志 | 审核、下架、取消 |
+| 统计与导出 | 报名与候补 | 按场次、票种汇总 |
+| 统计与导出 | 审计日志 | 导出名单必须记日志 |
+| 说明 |  | 四个界面只调用这些包，不直接改人数。名额只由报名与候补修改。通知和审计分开存放。 |
+endlegend
+@enduml

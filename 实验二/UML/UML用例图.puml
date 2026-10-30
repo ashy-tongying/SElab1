@@ -1,0 +1,113 @@
+@startuml UML用例图
+title 行为性图：用例图
+left to right direction
+
+skinparam shadowing false
+skinparam dpi 150
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+skinparam backgroundColor #FFFEFB
+skinparam ArrowColor #243044
+skinparam ActorBorderColor #243044
+skinparam ActorBackgroundColor #E7F0EE
+skinparam UsecaseBorderColor #243044
+skinparam UsecaseBackgroundColor #FFFFFF
+skinparam PackageBorderColor #243044
+skinparam PackageBackgroundColor #F7F4EE
+skinparam NoteBackgroundColor #FFF6E8
+skinparam NoteBorderColor #C4622D
+
+actor 参与者 as P
+actor 组织者 as O
+actor 检票人员 as C
+actor 平台管理员 as A
+
+P -[hidden]down- O
+O -[hidden]down- C
+C -[hidden]down- A
+
+rectangle "活动票务与报名系统" {
+  together {
+    usecase "组合查询活动" as UQ
+    usecase "查看活动详情" as UD
+    usecase "报名" as UR
+    usecase "取消报名" as UC
+    usecase "查看本人报名与签到" as UM
+    usecase "查看并标记通知" as UN
+  }
+  together {
+    usecase "创建活动并设置\n场次与票种" as OC
+    usecase "提交活动审核" as OS
+    usecase "修改非关键信息" as OE
+    usecase "发起关键信息变更" as OCH
+    usecase "审核报名" as OA
+    usecase "手动递补" as OP
+    usecase "查看统计" as OST
+    usecase "导出报名名单" as OX
+    usecase "指定本活动检票人员" as OCK
+    usecase "标记收费票支付状态" as OPAY
+    usecase "发起活动取消" as OCAN
+  }
+  together {
+    usecase "扫码或输入报名号核销" as CI
+    usecase "查看本活动签到名单" as CL
+  }
+  together {
+    usecase "审核活动" as AR
+    usecase "审核变更申请" as ACH
+    usecase "下架活动" as AO
+    usecase "强制取消活动" as AC
+    usecase "管理用户与权限" as AU
+    usecase "查询操作日志" as AL
+  }
+  usecase "校验权限" as AUTH
+  usecase "追加操作日志" as LOG
+}
+
+P --> UQ
+P --> UD
+P --> UR
+P --> UC
+P --> UM
+P --> UN
+
+O --> OC
+O --> OS
+O --> OE
+O --> OCH
+O --> OA
+O --> OP
+O --> OST
+O --> OX
+O --> OCK
+O --> OPAY
+O --> OCAN
+
+C --> CI
+C --> CL
+
+A --> AR
+A --> ACH
+A --> AO
+A --> AC
+A --> AU
+A --> AL
+A --> OPAY
+A --> OX
+
+UR ..> AUTH : <<include>>
+CI ..> AUTH : <<include>>
+OX ..> AUTH : <<include>>
+AR ..> AUTH : <<include>>
+UR ..> LOG : <<include>>
+CI ..> LOG : <<include>>
+OX ..> LOG : <<include>>
+OCAN ..> LOG : <<include>>
+
+legend bottom
+  检票人员不连接“导出报名名单”，也不能改活动或查看其他活动。
+  活动审核只连平台管理员，组织者不能审自己的活动。
+  从活动详情到报名完成不超过 3 步，失败时写明已满、已报名或已截止。
+  图上只给报名、核销、导出、审核、取消画出包含关系；其余写操作同样先校验权限，再追加日志。
+endlegend
+@enduml
