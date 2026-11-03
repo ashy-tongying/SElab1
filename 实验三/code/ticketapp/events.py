@@ -241,8 +241,8 @@ class EventService:
             )
             return event
 
-    def cancel_event(self, actor, event_id: int, confirmed: bool) -> Event:
-        """组织者取消或管理员强制取消。"""
+    def cancel_event(self, actor, event_id: int, confirmed: bool, reason: str = "") -> Event:
+        """组织者取消或管理员强制取消。原因写入日志。"""
         if not confirmed:
             raise AppError("取消活动需要二次确认")
         with self.database.immediate() as conn:
@@ -253,6 +253,8 @@ class EventService:
             repo.save_event(conn, event)
             self.regs.invalidate_event(conn, event)
             detail = "管理员强制取消" if actor.role.value == "平台管理员" else "组织者取消"
+            if reason.strip():
+                detail = f"{detail}：{reason.strip()}"
             self.audit.append(
                 conn, actor.id, "活动取消", "活动", event.id, "成功", detail, event.id
             )

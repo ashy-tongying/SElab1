@@ -12,7 +12,7 @@ def main() -> int:
         from selfcheck import main as check  # pylint: disable=import-outside-toplevel
 
         return check()
-    from ticketapp.ui import run  # pylint: disable=import-outside-toplevel
+    from ticketapp.web import run  # pylint: disable=import-outside-toplevel
 
     run()
     return 0
