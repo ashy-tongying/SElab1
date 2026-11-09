@@ -7,6 +7,8 @@ from __future__ import annotations
 import html
 import secrets
 import threading
+import urllib.error
+import urllib.request
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -1291,15 +1293,48 @@ def _q(query: dict, key: str) -> str:
     return (query.get(key) or [""])[0].strip()
 
 
-def run(db_path=None, port: int = 8765, open_browser: bool = True) -> None:
-    """启动活动汇。默认打开浏览器。"""
+def _port_in_use(port: int) -> bool:
+    """8765 上如果已经是活动汇，再启动一次就不要抢端口。"""
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/login", timeout=1) as response:
+            return response.status == 200
+    except (OSError, urllib.error.URLError):
+        return False
+
+
+def start_server(db_path=None, port: int = 8765):
+    """在后台监听。返回服务、端口，以及这次是不是新启动的。"""
+    if _port_in_use(port):
+        return None, port, False
     HubHandler.system = System(db_path)
-    server = ThreadingHTTPServer(("127.0.0.1", port), HubHandler)
-    url = f"http://127.0.0.1:{port}/login"
+    server = None
+    chosen = port
+    last_error = None
+    for chosen in range(port, port + 20):
+        try:
+            server = ThreadingHTTPServer(("127.0.0.1", chosen), HubHandler)
+            break
+        except OSError as exc:
+            last_error = exc
+    if server is None:
+        raise OSError(f"从 {port} 起的端口都无法监听") from last_error
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    for _ in range(50):
+        if _port_in_use(chosen):
+            return server, chosen, True
+        threading.Event().wait(0.1)
+    return server, chosen, True
+
+
+def run(db_path=None, port: int = 8765, open_browser: bool = True) -> None:
+    """只在浏览器里打开。桌面图标走 desktop.run。"""
+    _server, chosen, _owned = start_server(db_path, port)
+    url = f"http://127.0.0.1:{chosen}/login"
     print(f"活动汇已启动：{url}")
     if open_browser:
         webbrowser.open(url)
     try:
-        server.serve_forever()
+        threading.Event().wait()
     except KeyboardInterrupt:
-        server.server_close()
+        if _server is not None:
+            _server.shutdown()

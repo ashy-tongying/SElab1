@@ -1,0 +1,43 @@
+@startuml UML时序图-签到
+title 交互性图：时序图（签到核销与重复签到）
+
+skinparam shadowing false
+skinparam dpi 150
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+skinparam backgroundColor #FFFEFB
+skinparam ArrowColor #243044
+skinparam SequenceParticipantBorderColor #243044
+skinparam SequenceParticipantBackgroundColor #E7F0EE
+skinparam SequenceActorBorderColor #243044
+skinparam NoteBackgroundColor #FFF6E8
+skinparam NoteBorderColor #C4622D
+
+actor 检票人员
+participant "检票界面" as UI
+participant "签到服务" as C
+participant "报名记录" as R
+database "数据库" as DB
+participant "审计服务" as A
+
+检票人员 -> UI : 扫描报名二维码，或输入报名号
+UI -> C : 核销(检票人, 报名号)
+C -> DB : 查询报名、所属活动、检票授权
+alt 不是本活动的检票人员
+  C --> UI : 无权限
+else 报名不是“已通过”
+  C --> UI : 拒绝。已签到 / 已取消 / 已失效 / 已缺席\n不能核销
+  alt 状态已经是已签到
+    C -> A : 追加日志(重复签到, 拒绝)
+    note right of A
+      重复签到不新增第二条签到记录。
+      一条报名最多一条成功签到。
+    end note
+  end
+else 状态为已通过，且授权有效
+  C -> R : 状态改为已签到
+  C -> DB : 插入一条签到记录
+  C -> A : 追加日志(签到, 成功)
+  C --> UI : 显示用户名、票种、签到成功
+end
+@enduml

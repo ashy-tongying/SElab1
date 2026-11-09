@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+code/data/*.db
+code/data/*.db-wal
+code/data/*.db-shm
+.pylint.d/

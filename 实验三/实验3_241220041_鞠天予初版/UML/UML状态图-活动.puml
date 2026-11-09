@@ -1,0 +1,38 @@
+@startuml UML状态图-活动
+title 行为性图：状态图（活动）
+
+skinparam shadowing false
+skinparam dpi 150
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+skinparam backgroundColor #FFFEFB
+skinparam ArrowColor #243044
+skinparam StateBorderColor #243044
+skinparam StateBackgroundColor #FFFFFF
+skinparam StateStartColor #243044
+skinparam StateEndColor #243044
+skinparam NoteBackgroundColor #FFF6E8
+skinparam NoteBorderColor #C4622D
+
+[*] --> 草稿 : 组织者创建
+草稿 --> 草稿 : 补全介绍、场次、票种
+草稿 --> 待审核 : 信息完整后提交\n参与者仍不可见
+待审核 --> 已发布 : 管理员通过\n自动发布
+待审核 --> 已驳回 : 管理员驳回并填写原因
+已驳回 --> 待审核 : 组织者修改后重新提交
+
+已发布 --> 已发布 : 直接修改介绍、封面等非关键信息
+已发布 --> 已下架 : 管理员下架违规活动
+已发布 --> 已取消 : 组织者取消，或管理员强制取消
+已发布 --> 已结束 : 全部场次已结束
+
+已下架 --> 已取消 : 管理员强制取消
+已结束 --> [*]
+已取消 --> [*]
+
+legend bottom
+  已发布后，场次时间、票种价格、容量必须走变更申请。审核期间对外仍用原值，通过后写站内通知。
+  下架只是停止新报名，已有报名保留。取消才会把有效报名改为已失效、清空候补，并把收费票标为待退款。
+  已签到记录在取消时保留。已取消和已结束的活动不能再报名，重复取消会被拒绝。
+endlegend
+@enduml

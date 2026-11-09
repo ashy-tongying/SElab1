@@ -1,0 +1,62 @@
+@startuml UML时序图-报名提交
+title 交互性图：时序图（报名提交，含并发占位）
+
+skinparam shadowing false
+skinparam dpi 150
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+skinparam backgroundColor #FFFEFB
+skinparam ArrowColor #243044
+skinparam SequenceLifeLineBorderColor #243044
+skinparam SequenceParticipantBorderColor #243044
+skinparam SequenceParticipantBackgroundColor #E7F0EE
+skinparam SequenceActorBorderColor #243044
+skinparam SequenceBoxBorderColor #C4622D
+skinparam SequenceBoxBackgroundColor #FFF6E8
+skinparam NoteBackgroundColor #FFF6E8
+skinparam NoteBorderColor #C4622D
+
+actor 参与者
+participant "报名界面" as UI
+participant "报名服务" as S
+participant "活动与场次" as E
+database "数据库" as DB
+participant "审计服务" as A
+
+参与者 -> UI : 确认场次和票种
+UI -> S : 提交报名(用户, 场次, 票种)
+S -> E : 读取活动状态、截止时间、是否需审核
+alt 活动不可报名或已过截止
+  S --> UI : 拒绝，并说明已截止 / 已取消 / 未发布
+else 可以继续
+  S -> DB : 开启事务，按场次编号锁定场次行
+  S -> DB : 查询该用户在本场次的有效报名
+  alt 已存在待审核、已通过或候补中
+    S -> DB : 回滚本次业务写入
+    S -> A : 另行追加日志(报名, 拒绝, 原因=已报名)
+    S --> UI : 拒绝，提示已报名
+  else 需要审核
+    S -> DB : 插入报名记录(待审核)
+    note right
+      待审核不增加已报名数。
+      页面上看到的旧余量不能当作提交依据。
+      拒绝记录在回滚之后单独落日志，避免被事务一起抹掉。
+    end note
+    S -> A : 追加日志(报名, 待审核)
+    S -> DB : 提交事务
+    S --> UI : 返回报名号和待审核
+  else 锁定后仍有余量
+    S -> DB : 插入报名记录(已通过)，已报名数 +1
+    S -> DB : 收费票写待支付；免费票不写支付状态
+    S -> A : 追加日志(报名, 已通过)
+    S -> DB : 提交事务
+    S --> UI : 返回报名号和已通过
+  else 锁定后已满
+    S -> DB : 插入报名记录(候补中)\n候补数 +1，记下候补时间
+    S -> A : 追加日志(报名, 候补中)
+    S -> DB : 提交事务
+    S --> UI : 返回报名号和候补中
+  end
+end
+UI --> 参与者 : 结果页只展示这一次提交的状态或失败原因
+@enduml

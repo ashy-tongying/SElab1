@@ -1,0 +1,66 @@
+@startuml UML活动图-报名
+title 行为性图：活动图（报名提交）
+
+skinparam shadowing false
+skinparam dpi 150
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+skinparam backgroundColor #FFFEFB
+skinparam ArrowColor #243044
+skinparam ActivityBorderColor #243044
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityDiamondBorderColor #243044
+skinparam ActivityDiamondBackgroundColor #FFF6E8
+skinparam PartitionBorderColor #243044
+skinparam PartitionBackgroundColor #F7F4EE
+skinparam NoteBackgroundColor #FFF6E8
+skinparam NoteBorderColor #C4622D
+
+|参与者|
+start
+:在活动详情中选择场次和票种;
+:确认报名信息并提交;
+note right
+  详情、确认、结果，共 3 步。
+  移动端使用同一流程。
+end note
+
+|报名服务|
+:校验已登录，且活动对参与者可见;
+if (场次已发布、未取消、未过截止?) then (否)
+  |参与者|
+  :提示具体原因\n（已截止 / 已取消 / 未发布）;
+  stop
+else (是)
+endif
+
+|报名服务|
+:在事务中锁定该场次;
+if (该用户已有有效报名?) then (是)
+  |参与者|
+  :提示“已报名”;
+  stop
+else (否)
+endif
+
+|报名服务|
+switch (名额和审核如何组合?)
+case (需要审核)
+  :写入报名记录，状态=待审核\n不增加已报名数;
+case (免审核且仍有余量)
+  :写入报名记录，状态=已通过\n已报名数 +1;
+  if (票种收费?) then (是)
+    :支付状态记为待支付;
+  else (免费)
+    :支付状态留空;
+  endif
+case (免审核但已满)
+  :写入报名记录，状态=候补中\n记录进入候补时间，候补数 +1;
+endswitch
+
+|审计与界面|
+:追加一条报名日志;
+|参与者|
+:进入结果页，看到当前状态;
+stop
+@enduml

@@ -1,0 +1,45 @@
+@startuml UML状态图-报名记录
+title 行为性图：状态图（报名记录）
+
+skinparam shadowing false
+skinparam dpi 150
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+skinparam backgroundColor #FFFEFB
+skinparam ArrowColor #243044
+skinparam StateBorderColor #243044
+skinparam StateBackgroundColor #FFFFFF
+skinparam StateStartColor #243044
+skinparam StateEndColor #243044
+skinparam NoteBackgroundColor #FFF6E8
+skinparam NoteBorderColor #C4622D
+
+[*] --> 待审核 : 活动要求审核\n不占用名额
+[*] --> 已通过 : 报名即通过，且场次有余量\n已报名数 +1
+[*] --> 候补中 : 报名即通过，但场次已满\n候补数 +1
+
+待审核 --> 已通过 : 组织者通过，且仍有余量\n已报名数 +1，并写通知
+待审核 --> 候补中 : 组织者通过时已经满员\n转入候补，避免超卖
+待审核 --> 已取消 : 截止前用户取消\n或审核拒绝（记录原因）
+待审核 --> 已失效 : 活动被取消
+
+候补中 --> 已通过 : 自动或手动递补\n候补数 -1，已报名数 +1，并写通知
+候补中 --> 已取消 : 截止前用户取消\n候补数 -1
+候补中 --> 已失效 : 活动被取消，候补清空
+
+已通过 --> 已签到 : 本活动检票人员核销成功\n生成一条签到记录
+已通过 --> 已取消 : 截止前用户取消\n已报名数 -1，并尝试自动递补
+已通过 --> 已缺席 : 场次结束后的定时任务\n且不存在签到记录
+已通过 --> 已失效 : 活动被取消\n收费票标记待退款
+
+已签到 --> [*]
+已取消 --> [*]
+已失效 --> [*]
+已缺席 --> [*]
+
+legend bottom
+  已签到、已取消、已失效、已缺席是终态，不能再签到或取消。
+  已取消或已失效后若要参加，必须重新报名。活动取消时已签到记录保留。
+  自动递补按进入候补的时间从早到晚。手动递补不能使已报名数超过容量。
+endlegend
+@enduml

@@ -1,0 +1,26 @@
+[MAIN]
+py-version=3.11
+jobs=1
+
+[FORMAT]
+max-line-length=100
+
+[MESSAGES CONTROL]
+disable=
+    attribute-defined-outside-init,
+    broad-exception-caught,
+    duplicate-code,
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-branches,
+    too-many-instance-attributes,
+    too-many-lines,
+    too-many-locals,
+    too-many-positional-arguments,
+    too-many-public-methods,
+    too-many-return-statements,
+    too-many-statements
+
+[DESIGN]
+max-args=12
+max-attributes=20
