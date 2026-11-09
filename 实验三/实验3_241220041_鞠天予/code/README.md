@@ -4,9 +4,13 @@
 
 ## 运行
 
-在 `code` 目录执行 `python main.py`，或双击上一级目录和桌面上的「活动汇」图标。
+在 `code` 目录双击 `活动汇.vbs`，或双击旁边的 `活动汇` 快捷方式。也可以在这个目录执行 `python main.py`。
 
-会弹出活动汇自己的窗口，不用先打开浏览器。页面仍按实验二：参与者顶部导航，组织者、检票人员和管理员用左侧工作台，报名分三步。第一次换电脑如果提示缺少窗口组件，在 `code` 目录执行 `python -m pip install -r requirements.txt`。
+会弹出活动汇自己的窗口。只需要已安装并加入 PATH 的 Python 3.11。没有额外窗口组件时，会用系统自带的 Edge 打开一个没有地址栏的窗口。若要窗口标题和图标都是「活动汇」，先在 `code` 目录执行一次：
+
+```text
+python -m pip install -r requirements.txt
+```
 
 规则自检：
 
